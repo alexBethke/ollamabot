@@ -35,8 +35,20 @@ Keep this process and Ollama running, and keep the computer awake and connected 
 | `/id` | Show your Telegram user ID (also works before authorization) |
 | `/reset` | Clear your conversation history |
 | `/model` | Show the configured Ollama model |
+| `/code <task>` | Inspect and edit the configured project |
+| `/workspace` | Show the project directory and command setting |
 
 Change `OLLAMA_MODEL` in `.env` and restart to switch models. `HISTORY_TURNS` controls retained conversation pairs; `OLLAMA_TIMEOUT` is the request timeout in seconds. `SYSTEM_PROMPT` sets the assistant's instructions.
+
+## Coding
+
+Set `CODING_WORKSPACE` in `.env` to an existing project directory, then restart the bot. The configured Ollama model must support [tool calling](https://docs.ollama.com/capabilities/tool-calling). Send `/code inspect this project and add a unit test for its main behavior`. Use `/code` for follow-up tasks too; ordinary text remains chat without tools.
+
+The bot can list directories, read text files, create or replace files, and make exact text replacements. File tools stay inside the workspace and reject symlinks, hard links, `.git`, and `.env*` files except `.env.example`. Files are limited to 32 KB. Directory listings show up to 200 entries. Changes are applied directly to disk; review them with `git diff`. `/reset` clears both conversations but does not undo changes. Each coding request permits up to 16 model rounds with at most eight tools per round; completed exchanges are retained for follow-ups.
+
+To allow tests and other shell commands, set `CODING_ALLOW_COMMANDS=1` and restart. **Shell commands run as your computer's user, with access outside the workspace; the working directory is not a sandbox.** They can access files, use the network, or change the computer. Enable this only for trusted allowlisted users and projects. Commands time out after 60 seconds and return at most 32 KB of output. Bot configuration variables are not passed to child processes, but commands can still read accessible files. Use an isolated OS account or container if isolation is needed.
+
+Coding context and tool results go to the configured Ollama endpoint; progress and summaries go through Telegram. Edits survive failed model requests or reply delivery, so inspect the project before retrying an interrupted task. Coding tasks are processed sequentially and can delay other messages.
 
 ## Behavior and privacy
 
